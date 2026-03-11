@@ -23,7 +23,7 @@ FastAPI backend for enterprise attendance tracking with facial recognition (Insi
 ### 1. Clone and setup
 
 ```bash
-git clone https://github.com/ManasOP1/Attendace_Backend.git
+git clone https://github.com/jalok6543/Attendace_Backend.git
 cd Attendace_Backend
 
 python -m venv venv
