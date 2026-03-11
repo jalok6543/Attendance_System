@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/health", "destination": "https://attendace-backend-wtwf.onrender.com/health" },
+    { "source": "/api/:path*", "destination": "https://attendace-backend-wtwf.onrender.com/api/:path*" },
+    { "source": "/((?!api/|health).*)", "destination": "/index.html" }
+  ]
+}

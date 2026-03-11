@@ -1,0 +1,8 @@
+# Render Blueprint - Attendance Backend
+# buffalo_l needs ~1GB RAM; free tier (512MB) may OOM - set INSIGHTFACE_MODEL=buffalo_s in Environment
+services:
+  - type: web
+    name: attendace-backend
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
