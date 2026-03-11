@@ -109,7 +109,17 @@ export function StudentsPage() {
   }, [anyModalOpen]);
 
   const handleExportExcel = useCallback(() => {
-    const list = Array.isArray(data) ? data : [];
+    const list = (Array.isArray(data) ? data : []).slice().sort((a: Student, b: Student) => {
+      const classA = (a.class_name || '').localeCompare(b.class_name || '');
+      if (classA !== 0) return classA;
+      const ra = String(a.roll_number || '');
+      const rb = String(b.roll_number || '');
+      const na = parseInt(ra, 10);
+      const nb = parseInt(rb, 10);
+      if (!isNaN(na) && !isNaN(nb) && ra === String(na) && rb === String(nb))
+        return na - nb;
+      return ra.localeCompare(rb, undefined, { numeric: true });
+    });
     const rows = list.map((s: Student) => ({
       Name: s.name || '',
       'Roll No': s.roll_number || '',
@@ -185,7 +195,19 @@ export function StudentsPage() {
     );
   }
 
-  const students: Student[] = Array.isArray(data) ? data : [];
+  const students: Student[] = (Array.isArray(data) ? data : [])
+    .slice()
+    .sort((a, b) => {
+      const classA = (a.class_name || '').localeCompare(b.class_name || '');
+      if (classA !== 0) return classA;
+      const ra = String(a.roll_number || '');
+      const rb = String(b.roll_number || '');
+      const na = parseInt(ra, 10);
+      const nb = parseInt(rb, 10);
+      if (!isNaN(na) && !isNaN(nb) && ra === String(na) && rb === String(nb))
+        return na - nb;
+      return ra.localeCompare(rb, undefined, { numeric: true });
+    });
 
   return (
     <div className="w-full min-w-0">
