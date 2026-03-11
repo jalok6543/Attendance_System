@@ -1,6 +1,6 @@
 # Attendance Frontend
 
-React frontend for the Attendance Tracking System with face recognition. Connects to the [Attendace_Backend](https://github.com/ManasOP1/Attendace_Backend) API.
+React frontend for the Attendance Tracking System with face recognition. Connects to the [Attendace_Backend](https://github.com/jalok6543/Attendace_Backend) API.
 
 **Live Backend:** https://attendace-backend-wtwf.onrender.com/api/v1
 
