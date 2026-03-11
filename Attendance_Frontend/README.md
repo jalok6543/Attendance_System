@@ -28,7 +28,7 @@ React frontend for the Attendance Tracking System with face recognition. Connect
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/ManasOP1/Attendance_Frontend.git
+git clone https://github.com/jalok6543/Attendance_Frontend.git
 cd Attendance_Frontend
 
 npm install
