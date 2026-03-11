@@ -402,7 +402,7 @@ export function FaceCapturePage() {
             </div>
           )}
           {status === 'error' && (
-            <div className="flex items-center gap-2 text-red-600">
+            <div className="flex items-center gap-2 text-destructive-600">
               <XCircle className="w-5 h-5" />
               {message}
             </div>

@@ -108,7 +108,7 @@ export function CreateSubjectModal({
                 ))}
               </select>
             </div>
-            {subjectError && <p className="text-red-600 text-sm">{subjectError}</p>}
+            {subjectError && <p className="text-destructive-600 text-sm">{subjectError}</p>}
           </div>
           <div className="flex gap-3 px-6 py-5 border-t border-slate-200 bg-slate-50 rounded-b-xl">
             <button

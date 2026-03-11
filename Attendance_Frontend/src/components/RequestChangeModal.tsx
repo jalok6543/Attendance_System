@@ -80,7 +80,7 @@ export function RequestChangeModal({ student, onSuccess, onCancel }: RequestChan
               <p><span className="font-medium text-slate-700">Parent phone:</span> {student.parent_phone || '—'}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Message to Admin <span className="text-red-600">*</span></label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Message to Admin <span className="text-destructive-600">*</span></label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -91,7 +91,7 @@ export function RequestChangeModal({ student, onSuccess, onCancel }: RequestChan
                 required
               />
             </div>
-            {error && <p className="text-red-600 text-sm">{error}</p>}
+            {error && <p className="text-destructive-600 text-sm">{error}</p>}
           </div>
           <div className="flex gap-3 px-6 py-5 border-t border-slate-200 bg-slate-50 rounded-b-xl">
             <button

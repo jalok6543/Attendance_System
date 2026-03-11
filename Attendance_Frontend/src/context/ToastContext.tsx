@@ -86,12 +86,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 t.type === 'success'
                 ? 'bg-green-50 border-green-200 border-l-green-500 text-green-800'
                 : t.type === 'duplicate' || t.type === 'attendance_error' || t.type === 'face_not_registered'
-                  ? 'bg-red-100 border-red-300 border-l-red-500 text-red-900'
+                  ? 'bg-destructive-100 border-destructive-200 border-l-destructive-500 text-destructive-900'
                     : t.type === 'attendance_success'
                       ? 'bg-[#E6F9ED] border-green-200 border-l-green-500 text-green-900'
                       : t.type === 'attendance_already_marked'
                         ? 'bg-amber-100 border-amber-200 border-l-amber-500 text-amber-900'
-                        : 'bg-red-50 border-red-200 border-l-red-400 text-red-800'
+                        : 'bg-destructive-50 border-destructive-200 border-l-destructive-500 text-destructive-800'
             }`}
           >
             {t.type === 'success' || t.type === 'attendance_success' ? (
@@ -99,9 +99,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             ) : t.type === 'attendance_already_marked' ? (
               <XCircle className="w-5 h-5 flex-shrink-0 text-amber-700 mt-0.5" />
             ) : t.type === 'duplicate' || t.type === 'attendance_error' || t.type === 'face_not_registered' ? (
-              <XCircle className="w-5 h-5 flex-shrink-0 text-red-700 mt-0.5" />
+              <XCircle className="w-5 h-5 flex-shrink-0 text-destructive-700 mt-0.5" />
             ) : (
-              <XCircle className="w-5 h-5 flex-shrink-0 text-red-600 mt-0.5" />
+              <XCircle className="w-5 h-5 flex-shrink-0 text-destructive-600 mt-0.5" />
             )}
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="text-sm font-bold">{t.message}</span>

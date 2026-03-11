@@ -109,17 +109,7 @@ export function StudentsPage() {
   }, [anyModalOpen]);
 
   const handleExportExcel = useCallback(() => {
-    const list = (Array.isArray(data) ? data : []).slice().sort((a: Student, b: Student) => {
-      const classA = (a.class_name || '').localeCompare(b.class_name || '');
-      if (classA !== 0) return classA;
-      const ra = String(a.roll_number || '');
-      const rb = String(b.roll_number || '');
-      const na = parseInt(ra, 10);
-      const nb = parseInt(rb, 10);
-      if (!isNaN(na) && !isNaN(nb) && ra === String(na) && rb === String(nb))
-        return na - nb;
-      return ra.localeCompare(rb, undefined, { numeric: true });
-    });
+    const list = Array.isArray(data) ? data : [];
     const rows = list.map((s: Student) => ({
       Name: s.name || '',
       'Roll No': s.roll_number || '',
@@ -180,13 +170,13 @@ export function StudentsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-slate-800">Students</h1>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-destructive-50 border border-destructive-200 rounded-lg p-4 text-destructive-700">
           <p className="font-medium">Could not load students</p>
           <p className="text-sm mt-1">{errMsg}</p>
           <p className="text-xs mt-2 text-slate-600">Ensure the backend is running and the database schema is up to date (run supabase/migrations/001_initial_schema.sql).</p>
           <button
             onClick={() => refetch()}
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+            className="mt-3 px-4 py-2 bg-destructive-600 text-white rounded-lg hover:bg-destructive-700 text-sm"
           >
             Retry
           </button>
@@ -330,7 +320,7 @@ export function StudentsPage() {
                     required
                   />
                 </div>
-                {error && <p className="text-red-600 text-sm">{error}</p>}
+                {error && <p className="text-destructive-600 text-sm">{error}</p>}
               </div>
               <div className="flex gap-3 px-6 py-5 border-t border-slate-200 bg-slate-50 rounded-b-xl">
                 <button
@@ -422,7 +412,7 @@ export function StudentsPage() {
                     placeholder="Receives SMS when attendance &lt; 60%"
                   />
                 </div>
-                {error && <p className="text-red-600 text-sm">{error}</p>}
+                {error && <p className="text-destructive-600 text-sm">{error}</p>}
               </div>
               <div className="flex gap-3 px-6 py-5 border-t border-slate-200 bg-slate-50 rounded-b-xl">
                 <button
@@ -456,7 +446,7 @@ export function StudentsPage() {
               <p className="text-slate-600 mb-4">
                 Are you sure you want to delete <strong>{deleteConfirm.name || deleteConfirm.id}</strong>? This will remove the student and all related data.
               </p>
-              {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+              {error && <p className="text-destructive-600 text-sm mb-4">{error}</p>}
             </div>
             <div className="flex gap-3 px-6 py-5 border-t border-slate-200 bg-slate-50 rounded-b-xl">
               <button
@@ -468,7 +458,7 @@ export function StudentsPage() {
               <button
                 onClick={() => deleteMutation.mutate(deleteConfirm.id)}
                 disabled={deleteMutation.isPending}
-                className="flex-1 flex items-center justify-center py-2.5 px-4 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 flex items-center justify-center py-2.5 px-4 text-sm font-medium bg-destructive-600 text-white rounded-lg hover:bg-destructive-700 disabled:opacity-50"
               >
                 {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
@@ -533,7 +523,7 @@ export function StudentsPage() {
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(s)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        className="p-2 text-destructive-600 hover:bg-destructive-50 rounded-lg"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />

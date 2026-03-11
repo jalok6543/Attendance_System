@@ -177,7 +177,7 @@ export function ChangeRequestsPage() {
                           ? 'bg-amber-200 text-amber-800'
                           : req.status === 'approved'
                             ? 'bg-green-200 text-green-800'
-                            : 'bg-red-200 text-red-800'
+                            : 'bg-destructive-200 text-destructive-800'
                       }`}
                     >
                       {req.status}
@@ -229,7 +229,7 @@ export function ChangeRequestsPage() {
                     <button
                       onClick={() => rejectMutation.mutate(req.id)}
                       disabled={!!processingId}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-destructive-600 text-white rounded-lg text-sm font-medium hover:bg-destructive-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {rejectMutation.isPending && rejectMutation.variables === req.id ? (
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

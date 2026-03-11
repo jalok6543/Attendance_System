@@ -101,7 +101,7 @@ export function Layout() {
                   <Icon className="w-4 h-4 shrink-0" />
                   <span>{label}</span>
                   {typeof badge === 'number' && badge > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow-sm">
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive-500 text-white text-xs font-bold shadow-sm">
                       {badge > 99 ? '99+' : badge}
                     </span>
                   )}
@@ -133,7 +133,7 @@ export function Layout() {
                       setProfileOpen(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left text-slate-700 hover:bg-destructive-50 hover:text-destructive-600 transition-colors"
                   >
                     <LogOut className="w-4 h-4 shrink-0" />
                     Logout

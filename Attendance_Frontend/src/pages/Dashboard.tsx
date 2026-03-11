@@ -395,7 +395,7 @@ export function Dashboard() {
                 {previewMutation.data.low_attendance.map((s) => (
                   <li key={s.student_id} className="px-4 py-2 flex justify-between text-sm">
                     <span className="text-slate-800">{s.student_name}</span>
-                    <span className={s.percentage < 40 ? 'text-red-600 font-medium' : 'text-amber-700'}>
+                    <span className={s.percentage < 40 ? 'text-destructive-600 font-medium' : 'text-amber-700'}>
                       {s.percentage}%
                     </span>
                   </li>
