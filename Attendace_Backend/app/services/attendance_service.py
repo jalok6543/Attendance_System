@@ -12,6 +12,7 @@ from app.models.attendance import AttendanceCreate, AttendanceStatus
 from app.repositories.attendance_repository import AttendanceRepository
 from app.repositories.log_repository import LogRepository
 from app.repositories.student_repository import StudentRepository
+from app.repositories.subject_repository import SubjectRepository
 from app.services.sms_service import SMSService
 
 
@@ -301,6 +302,8 @@ class AttendanceService:
         start_date: date | None = None,
         end_date: date | None = None,
         subject_id: str | None = None,
+        expected_classes: int | None = None,
+        threshold: float | None = None,
     ) -> list[dict]:
         """Get per-student attendance report for export. If subject_id: filter by subject. Else: all subjects."""
         today = date.today()
@@ -311,7 +314,7 @@ class AttendanceService:
         if start_date > end_date:
             start_date, end_date = end_date, start_date
         return await AttendanceRepository.get_attendance_report_by_date_range(
-            start_date, end_date, subject_id
+            start_date, end_date, subject_id, expected_classes, threshold
         )
 
     @staticmethod
@@ -402,32 +405,192 @@ class AttendanceService:
         return result
 
     @staticmethod
-    async def manual_override(
-        student_id: str,
-        subject_id: str,
-        attendance_date: date,
-        status: AttendanceStatus,
-        user_id: str,
-    ) -> dict[str, Any]:
-        """Teacher manual override for attendance."""
-        existing = await AttendanceRepository.get_by_student_date_subject(
-            student_id, subject_id, attendance_date
-        )
-        if existing:
-            return await AttendanceRepository.update(
-                existing["id"], {"status": status.value}
+    async def get_low_attendance_preview(year: int | None = None, month: int | None = None) -> dict:
+        """Get preview of students with low attendance (<60%) for the given month.
+        Returns list of students with low attendance, count, and whether they have phone for SMS.
+        """
+        today = date.today()
+        check_year = year or today.year
+        check_month = month or today.month
+
+        students = await StudentRepository.get_all()
+        low_attendance_list = []
+
+        for student in students:
+            parent_phone = (student.get("parent_phone") or "").strip()
+            summary = await AttendanceRepository.get_monthly_summary(
+                student["id"], check_year, check_month
             )
-        attendance = AttendanceCreate(
-            student_id=student_id,
-            subject_id=subject_id,
-            date=attendance_date,
-            status=status,
-            confidence_score=1.0,
-        )
-        record = await AttendanceRepository.create(attendance)
-        await LogRepository.create(
-            user_id=user_id,
-            action="attendance_manual_override",
-            details={"student_id": student_id, "subject_id": subject_id, "status": status.value},
-        )
-        return record
+            if summary["working_days"] > 0 and summary["percentage"] < 60:
+                low_attendance_list.append({
+                    "student_id": student["id"],
+                    "student_name": student["name"],
+                    "percentage": summary["percentage"],
+                    "has_phone": bool(parent_phone and len(parent_phone) >= 10),
+                })
+
+        return {
+            "low_attendance": low_attendance_list,
+            "low_attendance_count": len(low_attendance_list),
+            "month": check_month,
+            "year": check_year,
+        }
+
+    @staticmethod
+    async def send_custom_attendance_message(
+        year: int | None = None,
+        month: int | None = None,
+        threshold: float = 60.0,
+        message: str = "",
+    ) -> dict:
+        """Send custom SMS message to students with attendance below the given threshold for the month."""
+        today = date.today()
+        check_year = year or today.year
+        check_month = month or today.month
+        settings = get_settings()
+        school_name = settings.SCHOOL_NAME
+
+        sms_configured = SMSService._is_configured()
+
+        students = await StudentRepository.get_all()
+        sent = 0
+        target_students = []
+
+        for student in students:
+            parent_phone = (student.get("parent_phone") or "").strip()
+            summary = await AttendanceRepository.get_monthly_summary(
+                student["id"], check_year, check_month
+            )
+            if summary["working_days"] > 0 and summary["percentage"] < threshold:
+                target_students.append({
+                    "student_name": student["name"],
+                    "percentage": summary["percentage"],
+                    "has_phone": bool(parent_phone and len(parent_phone) >= 10),
+                })
+                if parent_phone and len(parent_phone) >= 10:
+                    ok = await SMSService.send_custom_message(
+                        parent_phone=parent_phone,
+                        message=message,
+                        student_name=student["name"],
+                        school_name=school_name,
+                    )
+                    if ok:
+                        sent += 1
+
+        result = {
+            "sent": sent,
+            "target_count": len(target_students),
+            "month": check_month,
+            "year": check_year,
+            "threshold": threshold,
+            "message": message,
+            "target_students": [
+                {"student_name": x["student_name"], "percentage": x["percentage"]}
+                for x in target_students
+            ],
+        }
+        if not sms_configured and target_students:
+            result["sms_error"] = "FAST2SMS_API_KEY is not configured."
+        elif target_students and sent == 0:
+            result["sms_error"] = "SMS failed to send."
+        return result
+
+    @staticmethod
+    async def send_low_attendance_alerts_bulk(
+        student_ids: list[str],
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict:
+        """Send SMS to selected students with low attendance for the given month."""
+        today = date.today()
+        check_year = year or today.year
+        check_month = month or today.month
+        settings = get_settings()
+        school_name = settings.SCHOOL_NAME
+
+        sms_configured = SMSService._is_configured()
+
+        sent = 0
+        low_attendance_list = []
+
+        for student_id in student_ids:
+            student = await StudentRepository.get_by_id(student_id)
+            if not student:
+                continue
+            parent_phone = (student.get("parent_phone") or "").strip()
+            summary = await AttendanceRepository.get_monthly_summary(
+                student_id, check_year, check_month
+            )
+            if summary["working_days"] > 0 and summary["percentage"] < 60:
+                low_attendance_list.append({
+                    "student_name": student["name"],
+                    "percentage": summary["percentage"],
+                    "has_phone": bool(parent_phone and len(parent_phone) >= 10),
+                })
+                if parent_phone and len(parent_phone) >= 10:
+                    ok = await SMSService.send_low_attendance_alert(
+                        parent_phone=parent_phone,
+                        student_name=student["name"],
+                        school_name=school_name,
+                    )
+                    if ok:
+                        sent += 1
+
+        result = {
+            "sent": sent,
+            "total_selected": len(student_ids),
+            "month": check_month,
+            "year": check_year,
+            "low_attendance_count": len(low_attendance_list),
+            "low_attendance": [
+                {"student_name": x["student_name"], "percentage": x["percentage"]}
+                for x in low_attendance_list
+            ],
+        }
+        if not sms_configured and low_attendance_list:
+            result["sms_error"] = "FAST2SMS_API_KEY is not configured."
+        elif low_attendance_list and sent == 0:
+            result["sms_error"] = "SMS failed to send."
+        return result
+
+    @staticmethod
+    async def get_student_detailed_report(
+        student_id: str,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> dict[str, Any]:
+        """Get detailed attendance report for a student, including per-subject breakdown."""
+        today = date.today()
+        if not start_date:
+            start_date = today - timedelta(days=30)  # Last 30 days default
+        if not end_date:
+            end_date = today
+        if start_date > end_date:
+            start_date, end_date = end_date, start_date
+
+        records = await AttendanceRepository.get_by_student(student_id, start_date=start_date, end_date=end_date)
+        student = await StudentRepository.get_by_id(student_id)
+        subjects = await SubjectRepository.get_all()
+
+        subject_map = {s["id"]: s["name"] for s in subjects}
+        by_subject = {}
+        for record in records:
+            subj_id = record["subject_id"]
+            subj_name = subject_map.get(subj_id, "Unknown")
+            if subj_name not in by_subject:
+                by_subject[subj_name] = {"total": 0, "present": 0, "records": []}
+            by_subject[subj_name]["total"] += 1
+            if record["status"] == AttendanceStatus.PRESENT.value:
+                by_subject[subj_name]["present"] += 1
+            by_subject[subj_name]["records"].append(record)
+
+        overall = {"total": sum(s["total"] for s in by_subject.values()), "present": sum(s["present"] for s in by_subject.values())}
+        overall["percentage"] = int(round((overall["present"] / overall["total"] * 100), 0)) if overall["total"] > 0 else 0
+
+        return {
+            "student": student,
+            "period": {"start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
+            "overall": overall,
+            "by_subject": by_subject,
+            "records": records,
+        }

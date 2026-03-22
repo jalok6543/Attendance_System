@@ -196,6 +196,9 @@ export function FaceCapturePage() {
             }
             markedNames.push(name);
             toast.attendanceSuccess(checkInData?.student_name || name);
+            // Invalidate dashboard queries to update stats
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['attendance-analytics'] });
           } catch (err: unknown) {
             const errRes = (err as { response?: { status?: number; data?: { status?: string; message?: string } } })?.response;
             if (errRes?.status === 409 || errRes?.data?.status === 'already_marked') {

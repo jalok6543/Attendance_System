@@ -134,3 +134,20 @@ class SMSService:
             "regular attendance to meet the school's attendance criteria. Thank you."
         )
         return await _send_sms_async(message, numbers)
+
+    @staticmethod
+    async def send_custom_message(
+        parent_phone: str,
+        message: str,
+        student_name: str,
+        school_name: str,
+    ) -> bool:
+        """Send custom SMS message to parent."""
+        numbers = _normalize_phone_for_india(parent_phone)
+        if not numbers or not SMSService._is_configured():
+            return False
+
+        settings = get_settings()
+        school = school_name or settings.SCHOOL_NAME
+        full_message = f"Hello, this is a message from {school} regarding {student_name}: {message}"
+        return await _send_sms_async(full_message, numbers)

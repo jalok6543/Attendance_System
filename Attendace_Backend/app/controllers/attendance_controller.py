@@ -55,10 +55,12 @@ async def get_attendance_report(
     start_date: date | None = Query(None, description="Start date for report"),
     end_date: date | None = Query(None, description="End date for report"),
     subject_id: str | None = Query(None, description="Filter by subject (optional, all if not set)"),
+    expected_classes: int | None = Query(None, description="Override total classes count (optional)"),
+    threshold: float | None = Query(None, description="Attendance threshold for status (optional, default 60)"),
     current_user: dict = Depends(get_current_user),
 ):
     """Get per-student attendance report for Excel export. If no subject: export all subjects."""
-    return await AttendanceService.get_attendance_report(start_date, end_date, subject_id)
+    return await AttendanceService.get_attendance_report(start_date, end_date, subject_id, expected_classes, threshold)
 
 
 @router.post("/check-out")
@@ -118,25 +120,41 @@ async def get_low_attendance_preview(
     return await AttendanceService.get_low_attendance_preview(year=year, month=month)
 
 
-@router.post("/send-low-attendance-alerts")
-async def send_low_attendance_alerts_manual(
+class SendCustomMessageRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=500, description="Custom message to send")
+    threshold: float = Field(60.0, ge=0, le=100, description="Attendance threshold percentage")
+    year: int | None = Field(None, description="Year (default: current)")
+    month: int | None = Field(None, description="Month 1-12 (default: current)")
+
+
+@router.post("/send-custom-attendance-message")
+async def send_custom_attendance_message(
+    body: SendCustomMessageRequest,
+    current_user: dict = Depends(require_teacher_or_admin),
+):
+    """Send custom SMS message to students with attendance below the threshold."""
+    return await AttendanceService.send_custom_attendance_message(
+        year=body.year, month=body.month, threshold=body.threshold, message=body.message
+    )
+
+
+@router.post("/send-low-attendance-alerts-bulk")
+async def send_low_attendance_alerts_bulk(
+    student_ids: list[str],
     year: int | None = Query(None, description="Year (default: current)"),
     month: int | None = Query(None, description="Month 1-12 (default: current)"),
     current_user: dict = Depends(require_teacher_or_admin),
 ):
-    """Manually send SMS to parents of students with attendance below 60% for the given month."""
-    return await AttendanceService.send_low_attendance_alerts(year=year, month=month)
+    """Send SMS to selected students with low attendance."""
+    return await AttendanceService.send_low_attendance_alerts_bulk(student_ids, year, month)
 
 
-@router.post("/manual-override")
-async def manual_override(
+@router.get("/student/{student_id}/detailed-report")
+async def get_student_detailed_report(
     student_id: str,
-    subject_id: str,
-    attendance_date: date,
-    status: AttendanceStatus,
-    current_user: dict = Depends(require_teacher_or_admin),
+    start_date: date | None = Query(None, description="Start date for report"),
+    end_date: date | None = Query(None, description="End date for report"),
+    current_user: dict = Depends(get_current_user),
 ):
-    """Teacher manual override for attendance."""
-    return await AttendanceService.manual_override(
-        student_id, subject_id, attendance_date, status, current_user["sub"]
-    )
+    """Get detailed attendance report for a specific student."""
+    return await AttendanceService.get_student_detailed_report(student_id, start_date, end_date)

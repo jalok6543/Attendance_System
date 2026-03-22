@@ -2,7 +2,7 @@
 
 @import "tailwindcss";
 
-@theme {
+ @theme {
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --color-primary-50: #f0f9ff;
   --color-primary-100: #e0f2fe;

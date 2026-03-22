@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     REALTIME_DET_THRESH: float = 0.35  # Lower = detect more faces
     EMBEDDING_CACHE_REFRESH_SEC: int = 300  # 5 minutes
 
+    # Attendance thresholds
+    DEFAULT_ATTENDANCE_THRESHOLD: float = 60.0  # Default low attendance threshold (%)
+
     # Security
     RATE_LIMIT_PER_MINUTE: int = 60
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"

@@ -4,6 +4,7 @@ import calendar
 from datetime import date, timedelta
 from typing import Any
 
+from app.core.config import get_settings
 from app.models.attendance import AttendanceCreate, AttendanceStatus
 from app.repositories.database import get_supabase_admin_client
 
@@ -101,7 +102,7 @@ class AttendanceRepository:
         total = len(records)
         present = sum(1 for r in records if r.get("status") == AttendanceStatus.PRESENT.value)
         percentage = (present / total * 100) if total > 0 else 0
-        return {"student_id": student_id, "total": total, "present": present, "percentage": round(percentage, 2)}
+        return {"student_id": student_id, "total": total, "present": present, "percentage": int(round(percentage, 0))}
 
     @staticmethod
     async def get_monthly_summary(student_id: str, year: int, month: int) -> dict[str, Any]:
@@ -123,14 +124,12 @@ class AttendanceRepository:
             1 for d in range(1, last_day.day + 1)
             if date(year, month, d).weekday() < 5
         )
-        percentage = (present_days / working_days * 100) if working_days > 0 else 0
+        percentage = int(round((present_days / working_days * 100), 0)) if working_days > 0 else 0
         return {
             "student_id": student_id,
-            "year": year,
-            "month": month,
             "present_days": present_days,
             "working_days": working_days,
-            "percentage": round(percentage, 2),
+            "percentage": percentage,
         }
 
     @staticmethod
@@ -147,7 +146,7 @@ class AttendanceRepository:
             "total_classes": total,
             "present_count": present,
             "absent_count": absent,
-            "percentage": round(percentage, 2),
+            "percentage": int(round(percentage, 0)),
         }
 
     @staticmethod
@@ -229,11 +228,11 @@ class AttendanceRepository:
 
     @staticmethod
     async def get_attendance_report_by_date_range(
-        start_date: date, end_date: date, subject_id: str | None = None
+        start_date: date, end_date: date, subject_id: str | None = None, expected_classes: int | None = None, threshold: float | None = None
     ) -> list[dict[str, Any]]:
         """Get per-student attendance report. If subject_id: filter by subject. Else: all subjects.
         Returns: roll_no, student_name, class, subject, total_classes, present, absent, attendance_percent, status.
-        Status: Low if < 60%, High if >= 60%.
+        Status: Low if < threshold, High if >= threshold.
         """
         client = get_supabase_admin_client()
         query = (
@@ -247,12 +246,19 @@ class AttendanceRepository:
         result = query.execute()
         raw = result.data or []
 
-        working_days = sum(
-            1
-            for d in range((end_date - start_date).days + 1)
-            if (start_date + timedelta(days=d)).weekday() < 5
-        )
-        total_classes = max(1, working_days)
+        # Determine total_classes: use expected_classes if provided, else infer from actual dates
+        if expected_classes is not None and expected_classes > 0:
+            total_classes = expected_classes
+        else:
+            # Infer total class sessions from actual attendance records (dates present in database).
+            # This avoids assuming 5 classes per week when only 1 session has happened.
+            class_dates: set[str] = set()
+            for r in raw:
+                if not r.get("date"):
+                    continue
+                dt = r["date"][:10] if isinstance(r["date"], str) else str(r["date"])[:10]
+                class_dates.add(dt)
+            total_classes = max(1, len(class_dates))
 
         students_result = client.table("students").select("id, name, roll_number, class").execute()
         students_map = {s["id"]: s for s in (students_result.data or [])}
@@ -271,13 +277,15 @@ class AttendanceRepository:
 
         subject_label = subjects_map.get(subject_id, {}).get("name", "All") if subject_id else "All"
 
+        threshold_value = threshold if threshold is not None else get_settings().DEFAULT_ATTENDANCE_THRESHOLD
+
         report = []
         for student_id, present_dates in by_student.items():
             student = students_map.get(student_id, {})
             present = len(present_dates)
             absent = max(0, total_classes - present)
-            pct = round((present / total_classes * 100), 1) if total_classes > 0 else 0
-            status = "High" if pct >= 60 else "Low"
+            pct = int(round((present / total_classes * 100), 0)) if total_classes > 0 else 0
+            status = "High" if pct >= threshold_value else "Low"
             report.append({
                 "roll_no": student.get("roll_number", ""),
                 "student_name": student.get("name", ""),

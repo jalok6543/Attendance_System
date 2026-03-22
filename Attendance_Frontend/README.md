@@ -20,7 +20,7 @@ React frontend for the Attendance Tracking System with face recognition. Connect
 ## Prerequisites
 
 - Node.js 20+
-- Backend API running (see [Attendace_Backend](https://github.com/ManasOP1/Attendace_Backend))
+- Backend API running (see [Attendace_Backend](https://github.com/jalok6543/Attendace_Backend))
 - Supabase project (for Realtime)
 
 ## Quick Start

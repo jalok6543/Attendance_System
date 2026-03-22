@@ -62,16 +62,20 @@ export const dashboardApi = {
     api.get('/attendance/dashboard-stats', { params: reportDate ? { report_date: reportDate } : {} }),
   getLowAttendancePreview: (year?: number, month?: number) =>
     api.get('/attendance/low-attendance-preview', { params: { year, month } }),
-  sendLowAttendanceAlerts: (year?: number, month?: number) =>
-    api.post('/attendance/send-low-attendance-alerts', null, { params: { year, month } }),
+  sendLowAttendanceAlertsBulk: (studentIds: string[], year?: number, month?: number) =>
+    api.post('/attendance/send-low-attendance-alerts-bulk', { student_ids: studentIds }, { params: { year, month } }),
   getAnalyticsChart: (startDate: string, endDate: string, subjectId?: string) =>
     api.get('/attendance/analytics-chart', {
       params: { start_date: startDate, end_date: endDate, ...(subjectId ? { subject_id: subjectId } : {}) },
     }),
-  getAttendanceReport: (startDate: string, endDate: string, subjectId?: string) =>
+  getAttendanceReport: (startDate: string, endDate: string, subjectId?: string, expectedClasses?: number, threshold?: number) =>
     api.get('/attendance/attendance-report', {
-      params: { start_date: startDate, end_date: endDate, ...(subjectId ? { subject_id: subjectId } : {}) },
+      params: { start_date: startDate, end_date: endDate, ...(subjectId ? { subject_id: subjectId } : {}), ...(expectedClasses ? { expected_classes: expectedClasses } : {}), ...(threshold ? { threshold: threshold } : {}) },
     }),
+  sendLowAttendanceAlerts: (year: number, month: number) =>
+    api.post('/attendance/send-low-attendance-alerts', null, { params: { year, month } }),
+  sendCustomAttendanceMessage: (year: number, month: number, threshold: number, message: string) =>
+    api.post('/attendance/send-custom-attendance-message', { year, month, threshold, message }),
 };
 
 export const attendanceApi = {
@@ -87,8 +91,10 @@ export const attendanceApi = {
     }),
   getStudent: (studentId: string, params?: { subject_id?: string; start_date?: string; end_date?: string }) =>
     api.get(`/attendance/student/${studentId}`, { params }),
-  getSummary: (studentId: string, subjectId: string) =>
-    api.get(`/attendance/summary/${studentId}/${subjectId}`),
+  getStudentDetailedReport: (studentId: string, startDate?: string, endDate?: string) =>
+    api.get(`/attendance/student/${studentId}/detailed-report`, {
+      params: { start_date: startDate, end_date: endDate },
+    }),
   getDailyReport: (subjectId: string, reportDate: string) =>
     api.get('/attendance/daily-report', { params: { subject_id: subjectId, report_date: reportDate } }),
 };
